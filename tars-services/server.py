@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""TARS Services v4.0.0 — DJ + Hue + Doorbell + SwitchBot + Vacuum on port 8097"""
+"""TARS Services v4.1.0 — DJ + Hue + Doorbell + SwitchBot + Vacuum on port 8097"""
 import os,json,time,logging,random,base64,threading,hashlib,hmac,uuid
 from datetime import datetime
 from collections import deque,Counter
@@ -58,24 +58,87 @@ _sp_tok=None;_sp_exp=0;_kids=False;_cur_pid=None;_dj_recent=[];_dj_hist=deque(ma
 _dj_stats={'likes':{},'skips':{},'plays':{},'total_plays':0}
 DJ_DATA='/data/dj_stats.json'
 
-DJ_LIB={
- 'morning_early':[{'id':'37i9dQZF1DWXe9gFZP0gtP','name':'Chill Morning','vibe':'gentle'},{'id':'37i9dQZF1DX1n9whBbBKoL','name':'Lo-fi Cafe','vibe':'coffee'},{'id':'37i9dQZF1DX6ziVCJnEm59','name':'Morning Motivation','vibe':'upbeat'}],
- 'morning_late': [{'id':'5vImPKH5smp2ifK34N6XTd','name':'Energetic Upbeat Lofi','vibe':'productive'},{'id':'37i9dQZF1DX0SM0LYsmbMT','name':'Jazz Vibes','vibe':'sophisticated'},{'id':'37i9dQZF1DX4OzrY981I1W','name':'Indie Folk','vibe':'laid back'}],
- 'afternoon':    [{'id':'0CFuMybe6s77w6QQrJjW7d','name':'Chillhop Radio','vibe':'focus'},{'id':'37i9dQZF1DX0SM0LYsmbMT','name':'Jazz Vibes','vibe':'groove'},{'id':'37i9dQZF1DWVqJMsgEN0F4','name':'Acoustic Evening','vibe':'mellow'}],
- 'evening':      [{'id':'3NXxyeM9cp3bRnxNtqhOu4','name':'Lofi Trap Beats','vibe':'chill'},{'id':'37i9dQZF1DX6VdMW310YC7','name':'Chill R&B','vibe':'smooth'},{'id':'37i9dQZF1DWVqJMsgEN0F4','name':'Acoustic Evening','vibe':'wind down'},{'id':'37i9dQZF1DX3Ogo9pFvBkY','name':'Ambient','vibe':'zen'}],
- 'night':        [{'id':'5eDufIy8WtiArgp9aPd9su','name':'Late Night Vibes','vibe':'night owl'},{'id':'37i9dQZF1DWZd79rJ6a7lp','name':'Sleep Jazz','vibe':'dreamy'},{'id':'37i9dQZF1DX3Ogo9pFvBkY','name':'Ambient','vibe':'sleep'},{'id':'6bGe4ekNk4E4h9vVkuItul','name':'Ambient Deep Sleep','vibe':'deep sleep'}],
- 'chill':        [{'id':'37i9dQZF1DX3Ogo9pFvBkY','name':'Ambient'},{'id':'37i9dQZF1DWVqJMsgEN0F4','name':'Acoustic Evening'},{'id':'0CFuMybe6s77w6QQrJjW7d','name':'Chillhop'}],
- 'energetic':    [{'id':'37i9dQZF1DX6ziVCJnEm59','name':'Morning Motivation'},{'id':'37i9dQZF1DX76Wlfdnj7AP','name':'Beast Mode'},{'id':'37i9dQZF1DX0BcQWzuB7ZO','name':'Dance Hits'}],
- 'focus':        [{'id':'37i9dQZF1DX1n9whBbBKoL','name':'Lo-fi Cafe'},{'id':'37i9dQZF1DWZeKCadgRdKQ','name':'Deep Focus'},{'id':'0CFuMybe6s77w6QQrJjW7d','name':'Chillhop'}],
- 'party':        [{'id':'37i9dQZF1DX0BcQWzuB7ZO','name':'Dance Hits'},{'id':'37i9dQZF1DXa2PjGhjTnEG','name':'Party Starters'}],
- 'sleep':        [{'id':'37i9dQZF1DWZd79rJ6a7lp','name':'Sleep Jazz'},{'id':'37i9dQZF1DX3Ogo9pFvBkY','name':'Ambient'},{'id':'6bGe4ekNk4E4h9vVkuItul','name':'Ambient Deep Sleep'}],
- 'romantic':     [{'id':'37i9dQZF1DX6VdMW310YC7','name':'Chill R&B'},{'id':'37i9dQZF1DWVqJMsgEN0F4','name':'Acoustic Evening'}],
- 'rainy':        [{'id':'37i9dQZF1DX1n9whBbBKoL','name':'Lo-fi Cafe'},{'id':'37i9dQZF1DX3Ogo9pFvBkY','name':'Ambient'}],
- 'sunny':        [{'id':'37i9dQZF1DX4OzrY981I1W','name':'Indie Folk'},{'id':'37i9dQZF1DX6ziVCJnEm59','name':'Morning Motivation'}],
- 'kids':         [{'id':'37i9dQZF1DX6aTaZa0K6VA','name':'Disney Hits'},{'id':'37i9dQZF1DWVlYsZJXBFMo','name':'Kids Pop'},{'id':'37i9dQZF1DX2M1RktxUUHE','name':'Family Road Trip'},{'id':'7LD17YaJftpf0WMg40h25L','name':'Kids Dance Party Clean'},{'id':'2k1TzwejfDMu9vszNPQE4s','name':'Kids Dance Party Fun'},{'id':'1P27ra5VqAizmkcUzVAvp2','name':'Kids Party Songs 2026'}],
- 'dinner':       [{'id':'37i9dQZF1DX4xuWVBs4FgJ','name':'Dinner Jazz'},{'id':'37i9dQZF1DWVqJMsgEN0F4','name':'Acoustic Evening'}],
- 'workout':      [{'id':'37i9dQZF1DX76Wlfdnj7AP','name':'Beast Mode'},{'id':'37i9dQZF1DX0BcQWzuB7ZO','name':'Dance Hits'}],
+# ── Spotify's AI-personalized playlists (auto-updated by Spotify) ─────────────
+PERSONAL={
+    'daylist':        'spotify:playlist:37i9dQZF1EP6YuccBxUcC1',  # Changes throughout the day
+    'daily_mix_3':    'spotify:playlist:37i9dQZF1E3a0TMXH0oLW8',
+    'daily_mix_4':    'spotify:playlist:37i9dQZF1E36nKUSMNzrnm',
+    'daily_mix_6':    'spotify:playlist:37i9dQZF1E369GjaU60CUj',
+    'discover_weekly':'spotify:playlist:37i9dQZEVXcSHu0BZepRFh',
+    'release_radar':  'spotify:playlist:37i9dQZEVXbu5wT77YZsV6',
 }
+# Rotation order for daily mixes (to avoid repetition)
+_DAILY_MIX_KEYS=['daily_mix_3','daily_mix_4','daily_mix_6']
+_daily_mix_idx=0
+
+# ── Ben's own playlists by mood/context ───────────────────────────────────────
+BENS_PLAYLISTS={
+    'focus':[
+        {'id':'1WFLw3dZalvNN8VnTEtU5E','name':'ADHD Brown Noise'},
+        {'id':'4gx5r3lCzjZ5xwMRTFN4Uo','name':'Brown Noise for ADHD Focus'},
+        {'id':'5Ob9EjYpTvbmNGxhdQe5JM','name':'Flow State — Productivity'},
+        {'id':'2809d4TJsBlhqqJbqII6wY','name':'Music for ADHD Focus & Anxiety'},
+        {'id':'6AQdMpZX18FMugoQo4bch5','name':'Calm Brain Down - ADHD Ambient'},
+    ],
+    'chill':[
+        {'id':'109Ys5b0lW3Q9OQ34g6zPz','name':'FEELZ'},
+        {'id':'3vfuvrPYLGuho9OHMmwCyA','name':'Sunset Chill'},
+        {'id':'3Rhw1e6ZjC3FqBZ5J6v406','name':'Ocean'},
+        {'id':'3Tx1ikRfyfgXrcURtBCzZ1','name':'Ritual — chill'},
+    ],
+    'evening':[
+        {'id':'109Ys5b0lW3Q9OQ34g6zPz','name':'FEELZ'},
+        {'id':'3JuXHxwR7GGUqeITDmUeeX','name':'Dark Ambience'},
+        {'id':'5jtIpYaaFTza3O9ZnaVrLa','name':'Jazz Hop'},
+    ],
+    'morning':[
+        {'id':'5jtIpYaaFTza3O9ZnaVrLa','name':'Jazz Hop'},
+        {'id':'109Ys5b0lW3Q9OQ34g6zPz','name':'FEELZ'},
+    ],
+    'party':[
+        {'id':'36iTFqQnU5jYIeMEFigv7b','name':'BBQ Summer Vibes 2026'},
+        {'id':'53szrU4nXV43PZlbaQtBHZ','name':'Soca Party Vibes'},
+        {'id':'2VyuyPngjtC2rgUG7stmtd','name':'Spanish Hits Latin Party'},
+        {'id':'3jj9OljIriuIME8WORCdMF','name':'KROQ - Sound of LA'},
+    ],
+    'dinner':[
+        {'id':'5jtIpYaaFTza3O9ZnaVrLa','name':'Jazz Hop'},
+        {'id':'0jqQDMmHIkdbkFQdQTlMEQ','name':'Spanish Chill Vibes'},
+    ],
+    'sleep':[
+        {'id':'6sPkDFYJLQ1eNNjURZbAoZ','name':'Deep Sleep Music 528Hz'},
+        {'id':'7ztPRsWyA0WRC6O4qPaGQi','name':'Happy Frequency 528Hz'},
+        {'id':'2snHwIfUVgQT2RDmrfWUy6','name':'Cortisol Detox 741Hz'},
+    ],
+    'kids':[
+        {'id':'2FamGDKPaEuzMUO9M2kNtd','name':'Cooper'},
+        {'id':'2GW8dW7f6l9dXX1oIiJGFF','name':'Best Pixar Songs'},
+        {'id':'4EeQ4LBBXNBdqorHk9x4Oj','name':'Cars 1 2 3 Soundtrack'},
+        {'id':'2k1TzwejfDMu9vszNPQE4s','name':'Kids Dance Party Fun'},
+        {'id':'7LD17YaJftpf0WMg40h25L','name':'Kids Dance Party Clean'},
+    ],
+    'weekend':[
+        {'id':'6TeyryiZ2UEf3CbLXyztFA','name':'Classic Rock Greatest Hits'},
+        {'id':'3jj9OljIriuIME8WORCdMF','name':'KROQ Sound of LA'},
+        {'id':'36iTFqQnU5jYIeMEFigv7b','name':'BBQ Summer Vibes'},
+        {'id':'4ZQNqlKwDCPSeey2y7kwlD','name':'Oops All Jams'},
+    ],
+    'road_trip':[
+        {'id':'2rY91oD69tWIkxZzAzqJTn','name':'Road-tripping'},
+        {'id':'6TeyryiZ2UEf3CbLXyztFA','name':'Classic Rock Greatest Hits'},
+    ],
+    'mexico':[
+        {'id':'0cLSXq0ZeROv1M1uO3drZh','name':'VLP'},
+        {'id':'0NZ3dR5UC2HjVNtqs6KLXT','name':'Hawaiian Vacation'},
+        {'id':'0jqQDMmHIkdbkFQdQTlMEQ','name':'Spanish Chill Vibes'},
+    ],
+    'stress_relief':[
+        {'id':'2snHwIfUVgQT2RDmrfWUy6','name':'Cortisol Detox 741Hz'},
+        {'id':'7ztPRsWyA0WRC6O4qPaGQi','name':'Happy Frequency 528Hz'},
+        {'id':'6AQdMpZX18FMugoQo4bch5','name':'Calm Brain Down ADHD'},
+    ],
+}
+
 VOLS={'morning_early':0.22,'morning_late':0.25,'afternoon':0.28,'evening':0.25,'night':0.15}
 
 def _slot():
@@ -92,6 +155,39 @@ def _weather():
         if r.status_code==200: return r.json()['state']
     except: pass
     return 'unknown'
+
+def _co2():
+    """Return CO2 ppm from HA sensor, or 0 if unavailable."""
+    try:
+        r=http.get(f'{HA_URL}/api/states/sensor.co2_sensor',headers={'Authorization':f'Bearer {HA_TOKEN}'},timeout=5)
+        if r.status_code==200:
+            val=r.json().get('state','0')
+            return float(val) if val not in ('unknown','unavailable','') else 0
+    except: pass
+    return 0
+
+def _cooper_home():
+    """Check if Cooper is home via core service."""
+    try:
+        r=http.get(f'{CORE_URL}/cooper',timeout=3)
+        if r.status_code==200: return r.json().get('here',False)
+    except: pass
+    return False
+
+def _meeting_soon():
+    """Return True if there's a calendar event starting within 30 minutes."""
+    try:
+        now=datetime.now()
+        r=http.get(f'{HA_URL}/api/states/calendar.ben',headers={'Authorization':f'Bearer {HA_TOKEN}'},timeout=5)
+        if r.status_code==200:
+            attrs=r.json().get('attributes',{})
+            start_str=attrs.get('start_time','')
+            if start_str:
+                start=datetime.fromisoformat(start_str.replace('Z',''))
+                delta=(start-now).total_seconds()/60
+                return 0<=delta<=30
+    except: pass
+    return False
 
 def _sp_auth():
     global _sp_tok,_sp_exp
@@ -114,22 +210,115 @@ def _dj_save():
         with open(DJ_DATA,'w') as f: json.dump(_dj_stats,f)
     except: pass
 
-def _pick(mood=None):
-    global _dj_recent,_cur_pid
-    if _kids: mood='kids'
+def _next_daily_mix():
+    """Rotate through daily mixes to avoid repetition."""
+    global _daily_mix_idx
+    key=_DAILY_MIX_KEYS[_daily_mix_idx % len(_DAILY_MIX_KEYS)]
+    _daily_mix_idx+=1
+    uri=PERSONAL[key]
+    pid=uri.split(':')[-1]
+    return {'id':pid,'name':key.replace('_',' ').title(),'source':'personal','uri':uri}
+
+def _pick_from_list(playlist_list):
+    """Pick a playlist from a list, avoiding recent repeats."""
+    avail=[p for p in playlist_list if p['id'] not in _dj_recent[-3:]] or playlist_list
+    return random.choice(avail)
+
+def _build_context():
+    """Analyse current context for auto-pick decisions."""
+    now=datetime.now()
+    h=now.hour
+    dow=now.weekday()  # 0=Mon … 6=Sun
+    is_weekend=(dow>=5)
+    is_monday=(dow==0)
+    is_friday_evening=(dow==4 and h>=17)
+    is_morning_early=(6<=h<9)
+    is_focus_hours=(9<=h<17)
+    is_evening=(h>=20)
     w=_weather()
-    if mood and mood in DJ_LIB: cands=DJ_LIB[mood]
-    elif w in ['rainy','pouring']: cands=DJ_LIB.get('rainy',DJ_LIB[_slot()])
-    elif w in ['sunny','clear-night'] and _slot() in ['morning_late','afternoon']: cands=DJ_LIB.get('sunny',DJ_LIB[_slot()])
-    else: cands=DJ_LIB.get(_slot(),[])
-    if not cands: cands=DJ_LIB['afternoon']
-    avail=[p for p in cands if p['id'] not in _dj_recent[-3:]] or cands
-    p=random.choice(avail)
+    is_rainy=w in ('rainy','pouring','snowy','lightning-rainy')
+    co2=_co2()
+    high_co2=(co2>1000)
+    cooper=_cooper_home()
+    meeting=_meeting_soon()
+    return {
+        'hour':h,'weekday':dow,'is_weekend':is_weekend,'is_monday':is_monday,
+        'is_friday_evening':is_friday_evening,'is_morning_early':is_morning_early,
+        'is_focus_hours':is_focus_hours,'is_evening':is_evening,
+        'weather':w,'is_rainy':is_rainy,'co2':co2,'high_co2':high_co2,
+        'cooper_home':cooper,'meeting_soon':meeting,'slot':_slot(),
+    }
+
+def _pick(mood=None):
+    """Context-intelligent playlist picker."""
+    global _dj_recent,_cur_pid
+    # 1. Kids mode overrides everything
+    if _kids: mood='kids'
+
+    # 2. Explicit mood requested
+    if mood:
+        if mood in BENS_PLAYLISTS:
+            p=_pick_from_list(BENS_PLAYLISTS[mood])
+            source='bens_playlists'
+        elif mood=='daylist':
+            pid=PERSONAL['daylist'].split(':')[-1]
+            p={'id':pid,'name':'Daylist','source':'personal'}; source='personal'
+        elif mood=='discover':
+            pid=PERSONAL['discover_weekly'].split(':')[-1]
+            p={'id':pid,'name':'Discover Weekly','source':'personal'}; source='personal'
+        elif mood=='new':
+            pid=PERSONAL['release_radar'].split(':')[-1]
+            p={'id':pid,'name':'Release Radar','source':'personal'}; source='personal'
+        else:
+            # Unknown mood — fall back to Daylist
+            pid=PERSONAL['daylist'].split(':')[-1]
+            p={'id':pid,'name':'Daylist (fallback)','source':'personal'}; source='personal'
+        _dj_recent.append(p['id']); _dj_recent=_dj_recent[-10:]; _cur_pid=p['id']
+        _dj_stats['plays'][p['id']]=_dj_stats['plays'].get(p['id'],0)+1; _dj_stats['total_plays']+=1; _dj_save()
+        return p
+
+    # 3. Auto-play: context-intelligent selection
+    ctx=_build_context()
+    h=ctx['hour']; is_weekend=ctx['is_weekend']
+    chosen_list=None; chosen_uri=None; reason='daylist_default'
+
+    # Priority order (most specific first):
+    if ctx['high_co2']:
+        chosen_list=BENS_PLAYLISTS['stress_relief']; reason='high_co2_stress_relief'
+    elif ctx['meeting_soon']:
+        # Lower-volume focus mode — caller handles volume adjustment
+        chosen_list=BENS_PLAYLISTS['focus']; reason='meeting_soon_focus'
+    elif ctx['is_monday'] and ctx['is_morning_early']:
+        # New Music Monday — Discover Weekly
+        chosen_uri=PERSONAL['discover_weekly']; reason='new_music_monday'
+    elif ctx['is_friday_evening']:
+        chosen_list=BENS_PLAYLISTS['party']; reason='friday_evening_party'
+    elif is_weekend and 6<=h<12:
+        chosen_list=BENS_PLAYLISTS['weekend']; reason='weekend_morning'
+    elif ctx['is_focus_hours'] and not is_weekend and not ctx['cooper_home']:
+        chosen_list=BENS_PLAYLISTS['focus']; reason='focus_hours'
+    elif ctx['is_evening']:
+        chosen_list=BENS_PLAYLISTS['evening']; reason='evening'
+    elif ctx['is_rainy']:
+        chosen_list=BENS_PLAYLISTS['chill']; reason='rainy_weather'
+    # Default: Spotify Daylist (time-aware AI)
+    else:
+        chosen_uri=PERSONAL['daylist']; reason='daylist_default'
+
+    if chosen_uri:
+        pid=chosen_uri.split(':')[-1]
+        p={'id':pid,'name':reason.replace('_',' ').title(),'source':'personal','reason':reason}
+    elif chosen_list:
+        p=_pick_from_list(chosen_list); p['reason']=reason
+    else:
+        pid=PERSONAL['daylist'].split(':')[-1]
+        p={'id':pid,'name':'Daylist','source':'personal','reason':'daylist_default'}
+
     _dj_recent.append(p['id']); _dj_recent=_dj_recent[-10:]; _cur_pid=p['id']
     _dj_stats['plays'][p['id']]=_dj_stats['plays'].get(p['id'],0)+1; _dj_stats['total_plays']+=1; _dj_save()
     return p
 
-def _play(pid,vol=None,entity=None):
+def _play(pid,vol=None,entity=None,lower_for_meeting=False):
     global SONOS
     target=entity or SONOS
     if target in BEDROOM_ENTITIES and not is_bedroom_safe(): logger.warning(f'Blocking bedroom {target}'); return False
@@ -138,7 +327,10 @@ def _play(pid,vol=None,entity=None):
     try: http.post(f'{HA_URL}/api/services/media_player/select_source',headers=h,json={'entity_id':target,'source':'Spotify'},timeout=5)
     except: pass
     time.sleep(1)
-    if vol is None: vol=VOLS.get(_slot(),0.25); vol=min(vol+0.03,0.30) if _kids else vol
+    if vol is None:
+        vol=VOLS.get(_slot(),0.25)
+        if _kids: vol=min(vol+0.03,0.30)
+        if lower_for_meeting: vol=min(vol,0.18)
     http.post(f'{HA_URL}/api/services/media_player/volume_set',headers=h,json={'entity_id':target,'volume_level':vol},timeout=5)
     http.post(f'{HA_URL}/api/services/media_player/play_media',headers=h,json={'entity_id':target,'media_content_id':f'spotify:playlist:{pid}','media_content_type':'spotify://playlist'},timeout=5)
     time.sleep(1)
@@ -146,18 +338,25 @@ def _play(pid,vol=None,entity=None):
     _dj_hist.append({'time':datetime.now().isoformat(),'playlist':pid,'speaker':target})
     return True
 
+# ── DJ Routes ─────────────────────────────────────────────────────────────────
+
 @dj_bp.route('/health')
 def dj_health(): return jsonify({'status':'ok' if _sp_auth() else 'auth_failed','slot':_slot(),'kids_mode':_kids})
 
 @dj_bp.route('/recommend',methods=['GET','POST'])
-def dj_recommend(): p=_pick(mood=request.args.get('mood')); return jsonify({'id':p['id'],'name':p.get('name','?'),'vibe':p.get('vibe',''),'slot':_slot(),'weather':_weather()})
+def dj_recommend(): p=_pick(mood=request.args.get('mood')); return jsonify({'id':p['id'],'name':p.get('name','?'),'reason':p.get('reason',''),'slot':_slot(),'weather':_weather()})
 
 @dj_bp.route('/play',methods=['GET','POST'])
-def dj_play(): p=_pick(mood=request.args.get('mood')); _play(p['id']); return jsonify({'success':True,'playing':p.get('name',p['id']),'slot':_slot(),'kids_mode':_kids})
+def dj_play():
+    p=_pick(mood=request.args.get('mood'))
+    lower=p.get('reason','')=='meeting_soon_focus'
+    _play(p['id'],lower_for_meeting=lower)
+    return jsonify({'success':True,'playing':p.get('name',p['id']),'reason':p.get('reason',''),'slot':_slot(),'kids_mode':_kids})
 
 @dj_bp.route('/mood/<mood>',methods=['GET','POST'])
 def dj_mood(mood):
-    if mood not in DJ_LIB: return jsonify({'error':f'Unknown. Try: {list(DJ_LIB.keys())}'}),400
+    valid=list(BENS_PLAYLISTS.keys())+['daylist','discover','new']
+    if mood not in valid: return jsonify({'error':f'Unknown. Try: {valid}'}),400
     p=_pick(mood=mood); _play(p['id']); return jsonify({'success':True,'mood':mood,'playing':p.get('name',p['id'])})
 
 @dj_bp.route('/kids',methods=['GET','POST'])
@@ -192,12 +391,12 @@ def dj_now():
     try:
         r=http.get(f'{HA_URL}/api/states/{SONOS}',headers={'Authorization':f'Bearer {HA_TOKEN}'},timeout=5)
         if r.status_code==200:
-            d=r.json(); return jsonify({'state':d['state'],'title':d['attributes'].get('media_title'),'artist':d['attributes'].get('media_artist'),'volume':d['attributes'].get('volume_level'),'kids_mode':_kids})
+            d=r.json(); return jsonify({'state':d['state'],'title':d['attributes'].get('media_title'),'artist':d['attributes'].get('media_artist'),'volume':d['attributes'].get('volume_level'),'kids_mode':_kids,'entity_picture':d['attributes'].get('entity_picture')})
     except: pass
     return jsonify({'error':'failed'}),500
 
 @dj_bp.route('/playlists')
-def dj_playlists(): return jsonify(DJ_LIB)
+def dj_playlists(): return jsonify({'personal':PERSONAL,'bens_playlists':{k:[p['name'] for p in v] for k,v in BENS_PLAYLISTS.items()}})
 
 @dj_bp.route('/stats')
 def dj_stats(): return jsonify({'total_plays':_dj_stats['total_plays'],'kids_mode':_kids,'likes':_dj_stats['likes'],'skips':_dj_stats['skips']})
@@ -224,6 +423,70 @@ def dj_request():
 
 @dj_bp.route('/history')
 def dj_history(): return jsonify(list(_dj_hist))
+
+# ── New personalised shortcut endpoints ───────────────────────────────────────
+
+@dj_bp.route('/daylist',methods=['GET','POST'])
+def dj_daylist():
+    """Play Spotify Daylist — the time-aware AI playlist."""
+    pid=PERSONAL['daylist'].split(':')[-1]
+    _play(pid); _dj_hist.append({'time':datetime.now().isoformat(),'playlist':pid,'speaker':SONOS,'source':'daylist'})
+    return jsonify({'success':True,'playing':'Daylist','uri':PERSONAL['daylist']})
+
+@dj_bp.route('/discover',methods=['GET','POST'])
+def dj_discover():
+    """Play Discover Weekly — Spotify's weekly new music picks."""
+    pid=PERSONAL['discover_weekly'].split(':')[-1]
+    _play(pid)
+    return jsonify({'success':True,'playing':'Discover Weekly','uri':PERSONAL['discover_weekly']})
+
+@dj_bp.route('/new',methods=['GET','POST'])
+def dj_new():
+    """Play Release Radar — latest releases from artists you follow."""
+    pid=PERSONAL['release_radar'].split(':')[-1]
+    _play(pid)
+    return jsonify({'success':True,'playing':'Release Radar','uri':PERSONAL['release_radar']})
+
+@dj_bp.route('/mix/<int:n>',methods=['GET','POST'])
+def dj_mix(n):
+    """Play Daily Mix n (3, 4, or 6)."""
+    key=f'daily_mix_{n}'
+    if key not in PERSONAL: return jsonify({'error':'Available mixes: 3, 4, 6'}),400
+    pid=PERSONAL[key].split(':')[-1]
+    _play(pid)
+    return jsonify({'success':True,'playing':f'Daily Mix {n}','uri':PERSONAL[key]})
+
+@dj_bp.route('/context',methods=['GET'])
+def dj_context():
+    """Return current context analysis and what auto-play would pick."""
+    ctx=_build_context()
+    # Simulate what _pick() would choose without side-effects
+    p=_pick(mood=None)
+    return jsonify({
+        'context':ctx,
+        'would_play':{'id':p['id'],'name':p.get('name','?'),'reason':p.get('reason','')},
+        'kids_mode':_kids,
+        'current_playlist':_cur_pid,
+    })
+
+@dj_bp.route('/album-art',methods=['GET'])
+def dj_album_art():
+    """Return current album art URL from the active Sonos player."""
+    try:
+        r=http.get(f'{HA_URL}/api/states/{SONOS}',headers={'Authorization':f'Bearer {HA_TOKEN}'},timeout=5)
+        if r.status_code==200:
+            attrs=r.json().get('attributes',{})
+            entity_picture=attrs.get('entity_picture')
+            # entity_picture is a relative HA path — build full URL
+            art_url=f'{HA_URL}{entity_picture}' if entity_picture and entity_picture.startswith('/') else entity_picture
+            return jsonify({
+                'art_url':art_url,
+                'title':attrs.get('media_title'),
+                'artist':attrs.get('media_artist'),
+                'album':attrs.get('media_album_name'),
+            })
+    except: pass
+    return jsonify({'error':'Could not fetch album art'}),500
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # HUE
@@ -556,7 +819,7 @@ def vac_should_clean():
 # ROOT & HEALTH
 # ═══════════════════════════════════════════════════════════════════════════════
 @app.route('/')
-def root(): return jsonify({'name':'TARS Services','version':'4.0.0','services':['dj','hue','doorbell','switchbot','vacuum'],'port':API_PORT,'slot':_slot(),'kids_mode':_kids,'hue_mode':_hue_mode,'dj_total_plays':_dj_stats['total_plays'],'vac_days_since_clean':round(_vac_days(),1)})
+def root(): return jsonify({'name':'TARS Services','version':'4.1.0','services':['dj','hue','doorbell','switchbot','vacuum'],'port':API_PORT,'slot':_slot(),'kids_mode':_kids,'hue_mode':_hue_mode,'dj_total_plays':_dj_stats['total_plays'],'vac_days_since_clean':round(_vac_days(),1)})
 
 @app.route('/health')
 def health(): return jsonify({'status':'ok','dj':'ok' if _sp_auth() else 'auth_failed','hue':'ok' if _hg('/config') else 'unreachable','switchbot':'ok' if _sb_devs else 'no_devices','vacuum':'ok','doorbell':'ok'})
@@ -570,7 +833,7 @@ app.register_blueprint(sb_bp)
 app.register_blueprint(vac_bp)
 
 if __name__=='__main__':
-    logger.info(f'TARS Services v4.0.0 on port {API_PORT}')
+    logger.info(f'TARS Services v4.1.0 on port {API_PORT}')
     _dj_load(); _db_load(); _vac_load()
     threading.Thread(target=_sb_load,daemon=True).start()
     threading.Thread(target=_vac_track,daemon=True).start()
