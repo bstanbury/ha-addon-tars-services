@@ -1,1 +1,46 @@
-{"name":"TARS Services","version":"4.1.0","slug":"tars_services","description":"Consolidated: Spotify DJ + Hue + Doorbell + SwitchBot + Vacuum","url":"https://github.com/bstanbury/ha-addon-tars-services","arch":["aarch64","amd64","armhf","armv7","i386"],"startup":"application","boot":"auto","init":false,"host_network":true,"options":{"ha_url":"http://localhost:8123","ha_token":"","api_port":8097,"core_url":"http://localhost:8093","spotify_client_id":"","spotify_client_secret":"","hue_bridge_ip":"192.168.4.39","hue_api_key":"","switchbot_token":"","switchbot_secret":"","tuya_device_id":"eb4a6faf9217851dc9iop6","tuya_local_key":"","tuya_device_ip":"192.168.4.31","sonos_entity":"media_player.living_room"},"schema":{"ha_url":"str","ha_token":"str","api_port":"int","core_url":"str","spotify_client_id":"str","spotify_client_secret":"str","hue_bridge_ip":"str","hue_api_key":"str","switchbot_token":"str","switchbot_secret":"str","tuya_device_id":"str","tuya_local_key":"str","tuya_device_ip":"str","sonos_entity":"str"},"map":["addon_config:rw"],"panel_icon":"mdi:home-automation"}
+{
+  "name": "TARS Services",
+  "version": "5.1.0",
+  "slug": "tars_services",
+  "description": "v5.1: DJ + Hue + Doorbell + SwitchBot + Vacuum + Alarm + Core SSE subscriber",
+  "url": "https://github.com/bstanbury/ha-addon-tars-services",
+  "arch": ["aarch64", "amd64", "armhf", "armv7", "i386"],
+  "startup": "application",
+  "boot": "auto",
+  "init": false,
+  "host_network": true,
+  "options": {
+    "ha_url": "http://localhost:8123",
+    "ha_token": "",
+    "api_port": 8097,
+    "core_url": "http://localhost:8093",
+    "spotify_client_id": "",
+    "spotify_client_secret": "",
+    "hue_bridge_ip": "192.168.4.39",
+    "hue_api_key": "",
+    "switchbot_token": "",
+    "switchbot_secret": "",
+    "tuya_device_id": "",
+    "tuya_local_key": "",
+    "tuya_device_ip": "",
+    "sonos_entity": "media_player.living_room"
+  },
+  "schema": {
+    "ha_url": "str",
+    "ha_token": "str",
+    "api_port": "int",
+    "core_url": "str",
+    "spotify_client_id": "str",
+    "spotify_client_secret": "str",
+    "hue_bridge_ip": "str",
+    "hue_api_key": "str",
+    "switchbot_token": "str",
+    "switchbot_secret": "str",
+    "tuya_device_id": "str",
+    "tuya_local_key": "str",
+    "tuya_device_ip": "str",
+    "sonos_entity": "str"
+  },
+  "map": ["addon_config:rw"],
+  "panel_icon": "mdi:home-automation"
+}
